@@ -17,18 +17,21 @@ import java.util.List;
 
 public class ZKMavenDownloadAgent {
 
+	private static final String THEME_SAPPHIRE = "sapphire";
+	private static final String THEME_SILVERTAIL = "silvertail";
+	private static final String THEME_BREEZE = "breeze";
 	private static final String DW_PROPERTES = "dw.propertes";
 	private static final String LATEST = "latest/";
 
 	private static List<MavenArtifact> getZKEEPackage(String theme) {
 		List<MavenArtifact> list = new ArrayList<MavenArtifact>();
 
-		if("breeze".equals(theme)){
-			list.add(new MavenArtifact("org.zkoss.theme", "breeze"));
-		}else if("silvertail".equals(theme)){
-			list.add(new MavenArtifact("org.zkoss.theme", "silvertail"));
-		}else if("sapphire".equals(theme)){
-			list.add(new MavenArtifact("org.zkoss.theme", "sapphire"));
+		if(THEME_BREEZE.equals(theme)){
+			list.add(new MavenArtifact("org.zkoss.theme", THEME_BREEZE));
+		}else if(THEME_SILVERTAIL.equals(theme)){
+			list.add(new MavenArtifact("org.zkoss.theme", THEME_SILVERTAIL));
+		}else if(THEME_SAPPHIRE.equals(theme)){
+			list.add(new MavenArtifact("org.zkoss.theme", THEME_SAPPHIRE));
 		}
 		
 		list.add(new MavenArtifact("org.zkoss.common", "zweb"));
