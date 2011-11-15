@@ -17,13 +17,14 @@ import java.util.List;
 
 public class ZKMavenDownloadAgent {
 
+	private static final String ZK6 = "zk6";
 	private static final String THEME_SAPPHIRE = "sapphire";
 	private static final String THEME_SILVERTAIL = "silvertail";
 	private static final String THEME_BREEZE = "breeze";
 	private static final String DW_PROPERTES = "dw.propertes";
 	private static final String LATEST = "latest/";
 
-	private static List<MavenArtifact> getZKEEPackage(String theme) {
+	private static List<MavenArtifact> getZKEEPackage(boolean zbind) {
 		List<MavenArtifact> list = new ArrayList<MavenArtifact>();
 
 		list.add(new MavenArtifact("org.zkoss.common", "zweb"));
@@ -36,10 +37,13 @@ public class ZKMavenDownloadAgent {
 		list.add(new MavenArtifact("org.zkoss.zk", "zml"));
 		list.add(new MavenArtifact("org.zkoss.common", "zcommon"));
 
+		if(zbind){
+			list.add(new MavenArtifact( "org.zkoss.zk", "zbind"));
+		}
 		return list;
 	}
 
-	public static boolean checkZKEEPackage(String version,String theme) throws IOException {
+	public static boolean checkZKEEPackage(String version,String artificatPrefix) throws IOException {
 		String repo = "http://mavensync.zkoss.org/zk/ee-eval/";
 
 		boolean success = MavenDownloadAgent.isFileExist(repo, "org.zkoss.zk", "zuljsp", "1.5");
@@ -51,11 +55,11 @@ public class ZKMavenDownloadAgent {
 			return false;
 		}
 		
-		List<MavenArtifact> artifacts = getZKEEPackage(theme);
+		List<MavenArtifact> artifacts = getZKEEPackage(ZK6.equals(version));
 		for (MavenArtifact artifact : artifacts) {
 
 			boolean newsuccess = MavenDownloadAgent.isFileExist(repo, artifact.getGroup(), artifact.getArtifact(),
-					version);
+					artificatPrefix);
 
 			success = success && newsuccess;
 			if(!success ) {
@@ -67,29 +71,36 @@ public class ZKMavenDownloadAgent {
 
 	}
 
-	public static boolean downloadZKEE(String storage, String version,String theme) throws IOException {
+	public static boolean downloadZKEE(String storage,String version, String artifactPrefix) throws IOException {
 
 		String repo = "http://mavensync.zkoss.org/zk/ee-eval/";
 
 		boolean success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.zk", "zuljsp", "1.5");
-		success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.zkforge.el", "zcommons-el", "1.1.0")
-				&& success;
+		
+		if(ZK6.equals(version)){
+			success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.common", "zel", "2.2.0")
+			&& success;
+			
+		}else{
+			success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.zkforge.el", "zcommons-el", "1.1.0")
+			&& success;			
+		}
 
-		List<MavenArtifact> artifacts = getZKEEPackage(theme);
+		List<MavenArtifact> artifacts = getZKEEPackage(ZK6.equals(version));
 		
 		for (MavenArtifact artifact : artifacts) {
 
 			boolean newsuccess = MavenDownloadAgent.downloadJar(storage, repo, artifact.getGroup(),
-					artifact.getArtifact(), version);
+					artifact.getArtifact(), artifactPrefix);
 
 			success = success && newsuccess;
 
 		}
 		
 		//Download all theme if exist
-		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_BREEZE, version);
-		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_SILVERTAIL, version);
-		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_SAPPHIRE, version);
+		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_BREEZE, artifactPrefix);
+		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_SILVERTAIL, artifactPrefix);
+		MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.theme", THEME_SAPPHIRE, artifactPrefix);
 		
 		return success;
 
@@ -152,7 +163,7 @@ public class ZKMavenDownloadAgent {
 		
 		String targetFolder = args[0];//"test/";
 		String prefix = args[1];//"5.0.10.FL.";
-		String theme = args[2];
+		String version = args.length > 1 ? args[2] : null;
 		
 		Date lastdate = null;
 
@@ -176,20 +187,20 @@ public class ZKMavenDownloadAgent {
 		Date index = dateformatter.parse(dateformatter.format(new Date()));
 
 		while (lastdate.before(index)) {
-			String ver = prefix + dateformatter.format(index);
-			if (checkZKEEPackage(ver,theme)) {
-				boolean download = downloadZKEE(targetFolder + ver + "/", ver,theme);
+			String artificat = prefix + dateformatter.format(index);
+			if (checkZKEEPackage(version,artificat)) {
+				boolean download = downloadZKEE(targetFolder + artificat + "/" ,version, artificat);
 
 				if (download) {
 					cleanLastest(targetFolder);
 					FileWriter fw = new FileWriter(targetFolder + DW_PROPERTES, false);
 					fw.write(dateformatter.format(index));
 					fw.close();
-					copyFolder(targetFolder + ver + "/",targetFolder+ LATEST);
+					copyFolder(targetFolder + artificat + "/",targetFolder+ LATEST);
 					break;
 				}
 			} else {
-				System.out.println("Skip:" + ver + " failed");
+				System.out.println("Skip:" + artificat + " failed");
 			}
 
 			index.setDate(index.getDate() - 1);
