@@ -78,7 +78,7 @@ public class ZKMavenDownloadAgent {
 		boolean success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.zk", "zuljsp", "1.5");
 		
 		if(ZK6.equals(version)){
-			success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.common", "zel", "2.2.0")
+			success = MavenDownloadAgent.downloadJar(storage, repo, "org.zkoss.common", "zel", "2.2.1")
 			&& success;
 			
 		}else{
